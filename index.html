@@ -511,7 +511,7 @@ function viewRow(r) {
     <td>${r.cntr}</td>
     <td style="font-weight:600">${fmtAmt(r.amount)}</td>
     <td>${fmtDateDisplay(r.eta)}</td>
-    <td style="font-size:11px">${r.storage||'—'}</td>
+    <td style="font-size:11px">${fmtDateDisplay(r.storage)}</td>
     <td style="font-size:11px">${r.rcvd||'—'}</td>
     <td class="${daysCls(d)}">${d>0?d+'d':'—'}</td>
     <td><span class="badge ${statusCls(r.status)}">${r.status}</span></td>
@@ -536,7 +536,7 @@ function editRow(r) {
     <td class="edit-cell"><input value="${esc(r.cntr)}"    onchange="updateField('${id}','cntr',this.value)"/></td>
     <td class="edit-cell"><input type="number" value="${r.amount}" onchange="updateField('${id}','amount',this.value)" step="0.01"/></td>
     <td class="edit-cell"><input type="date" value="${fmtDateInput(r.eta)}" onchange="updateField('${id}','eta',this.value)"/></td>
-    <td class="edit-cell"><input value="${esc(r.storage)}" onchange="updateField('${id}','storage',this.value)"/></td>
+    <td class="edit-cell"><input type="date" value="${fmtDateInput(r.storage)}" onchange="updateField('${id}','storage',this.value)"/></td>
     <td class="edit-cell"><input value="${esc(r.rcvd)}"    onchange="updateField('${id}','rcvd',this.value)"/></td>
     <td class="edit-cell"><input type="number" value="${r.days}" onchange="updateField('${id}','days',this.value)"/></td>
     <td class="edit-cell"><select onchange="updateField('${id}','status',this.value)">${statusOpts(r.status)}</select></td>
