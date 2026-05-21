@@ -142,12 +142,12 @@
       <colgroup>
         <col style="width:115px"><col style="width:130px"><col style="width:100px"><col style="width:55px">
         <col style="width:50px"><col style="width:88px"><col style="width:52px"><col style="width:55px">
-        <col style="width:55px"><col style="width:44px"><col style="width:44px"><col style="width:210px"><col style="width:55px"><col style="width:68px">
+        <col style="width:55px"><col style="width:44px"><col style="width:44px"><col style="width:260px"><col style="width:55px"><col style="width:68px">
       </colgroup>
       <thead><tr>
         <th>BL No. / Ref</th><th>بضاعة</th><th>عميل / مورد</th><th>بنك</th>
         <th>حاويات</th><th>مبلغ $</th><th>ETA</th><th>تخزين</th>
-        <th>ارسال الي البنك</th><th>أيام</th><th>حالة</th><th>Clearer</th><th>ملاحظات</th><th>⚙️</th>
+        <th>وصل</th><th>أيام</th><th>حالة</th><th style="text-align:center">Clearer</th><th>ملاحظات</th><th>⚙️</th>
       </tr></thead>
       <tbody id="tbody"></tbody>
     </table>
@@ -511,11 +511,11 @@ function viewRow(r) {
     <td>${r.cntr}</td>
     <td style="font-weight:600">${fmtAmt(r.amount)}</td>
     <td>${fmtDateDisplay(r.eta)}</td>
-    <td style="font-size:11px">${fmtDateDisplay(r.storage)}</td>
+    <td style="font-size:11px">${r.storage||'—'}</td>
     <td style="font-size:11px">${r.rcvd||'—'}</td>
     <td class="${daysCls(d)}">${d>0?d+'d':'—'}</td>
     <td><span class="badge ${statusCls(r.status)}">${r.status}</span></td>
-    <td><span class="badge ${r.clearer==='RELAN'?'c-RELAN':r.clearer==='MAHABA'?'c-MAHABA':r.clearer==='El Badry'?'c-BADRY':'s-N'}">${r.clearer||'—'}</span></td>
+    <td style="text-align:center"><span class="badge ${r.clearer==='RELAN'?'c-RELAN':r.clearer==='MAHABA'?'c-MAHABA':r.clearer==='El Badry'?'c-BADRY':'s-N'}">${r.clearer||'—'}</span></td>
     <td style="color:#666;font-size:11px">${r.comment||'—'}</td>
     <td><button class="icon-btn" onclick="toggleEdit()" title="تعديل">✏️</button></td>`;
 }
@@ -536,11 +536,11 @@ function editRow(r) {
     <td class="edit-cell"><input value="${esc(r.cntr)}"    onchange="updateField('${id}','cntr',this.value)"/></td>
     <td class="edit-cell"><input type="number" value="${r.amount}" onchange="updateField('${id}','amount',this.value)" step="0.01"/></td>
     <td class="edit-cell"><input type="date" value="${fmtDateInput(r.eta)}" onchange="updateField('${id}','eta',this.value)"/></td>
-    <td class="edit-cell"><input type="date" value="${fmtDateInput(r.storage)}" onchange="updateField('${id}','storage',this.value)"/></td>
+    <td class="edit-cell"><input value="${esc(r.storage)}" onchange="updateField('${id}','storage',this.value)"/></td>
     <td class="edit-cell"><input value="${esc(r.rcvd)}"    onchange="updateField('${id}','rcvd',this.value)"/></td>
     <td class="edit-cell"><input type="number" value="${r.days}" onchange="updateField('${id}','days',this.value)"/></td>
     <td class="edit-cell"><select onchange="updateField('${id}','status',this.value)">${statusOpts(r.status)}</select></td>
-    <td class="edit-cell"><select onchange="updateField('${id}','clearer',this.value)">${clearerOpts(r.clearer||'')}</select></td>
+    <td class="edit-cell" style="text-align:center"><select onchange="updateField('${id}','clearer',this.value)">${clearerOpts(r.clearer||'')}</select></td>
     <td class="edit-cell"><textarea onchange="updateField('${id}','comment',this.value)">${esc(r.comment)}</textarea></td>
     <td style="white-space:nowrap"><button class="icon-btn save" onclick="manualSave('${id}')" title="حفظ">💾</button><button class="icon-btn del" onclick="deleteRow('${id}')" title="حذف">🗑</button></td>`;
 }
