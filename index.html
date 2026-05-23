@@ -138,7 +138,7 @@
     <select id="fClearer"><option value="">كل الـ Clearers</option><option>RELAN</option><option>MAHABA</option><option>El Badry</option></select>
     <input id="fSearch" type="text" placeholder="بحث BL / عميل / بضاعة / Ref..."/>
     <button class="btn btn-edit" id="btnToggleEdit" onclick="toggleEdit()">✏️ Edit Mode</button>
-    <button class="btn btn-add" id="btnAdd" style="display:none" onclick="addRow()">+ شحنة جديدة</button>
+    <button class="btn btn-add" id="btnAdd" onclick="addRow()">+ شحنة جديدة</button>
     <button class="btn" onclick="window.print()">🖨️ Print</button>
     <button class="btn" onclick="loadData(true)" title="تحديث يدوي">🔄 Refresh</button>
   </div>
@@ -353,6 +353,10 @@ function updateField(id, field, val) {
 
   if (field === 'amount') r[field] = parseFloat(val) || 0;
   else if (field === 'days') r[field] = parseInt(val) || 0;
+  else if (['eta','storage','rcvd'].includes(field)) {
+    // حفظ التاريخ كـ YYYY-MM-DD نص بحت
+    r[field] = val ? String(val).slice(0,10) : '';
+  }
   else r[field] = val;
 
   updateSummary(getFiltered());
@@ -463,13 +467,13 @@ function toggleEdit() {
     badge.className   = 'mode-badge mode-edit';
     btn.textContent   = '👁 View Mode';
     document.getElementById('modeHint').textContent = 'عدّل أي خلية — يتحفظ تلقائيًا في Google Sheets';
-    document.getElementById('btnAdd').style.display = '';
+    // btnAdd ظاهر دايماً
   } else {
     badge.textContent = 'View Mode';
     badge.className   = 'mode-badge mode-view';
     btn.textContent   = '✏️ Edit Mode';
     document.getElementById('modeHint').textContent = 'اضغط Edit Mode لتفعيل التعديل';
-    document.getElementById('btnAdd').style.display = 'none';
+    // btnAdd ظاهر دايماً
   }
   render();
 }
@@ -546,12 +550,15 @@ function parseLocalDate(v) {
 
 function fmtDateInput(v) {
   if (!v) return '';
-  const s = String(v);
-  // لو فيه T خد الجزء الأول بس
-  const dateOnly = s.includes('T') ? s.split('T')[0] : s.slice(0,10);
-  // تأكد إن الفورمات YYYY-MM-DD
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) return dateOnly;
-  return '';
+  const s = String(v).trim();
+  // لو timestamp خد الجزء الأول
+  const raw = s.includes('T') ? s.split('T')[0] : s.slice(0,10);
+  // لو dd/mm/yyyy حوّله
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+    const p = raw.split('/');
+    return p[2]+'-'+p[1]+'-'+p[0];
+  }
+  return raw;
 }
 // Display date as dd/mm/yyyy — strips time always
 function fmtDateDisplay(v) {
@@ -600,9 +607,9 @@ function editRow(r) {
     <td class="edit-cell"><select onchange="updateField('${id}','bank',this.value)">${bankOpts(r.bank)}</select></td>
     <td class="edit-cell"><input value="${esc(r.cntr)}"    onchange="updateField('${id}','cntr',this.value)"/></td>
     <td class="edit-cell"><input type="number" value="${r.amount}" onchange="updateField('${id}','amount',this.value)" step="0.01"/></td>
-    <td class="edit-cell"><input type="text" value="${fmtDateDisplay(r.eta)!=='—'?fmtDateDisplay(r.eta):''}" onchange="updateField('${id}','eta',parseLocalDate(this.value))" placeholder="dd/mm/yyyy"/></td>
-    <td class="edit-cell"><input type="text" value="${fmtDateDisplay(r.storage)!=='—'?fmtDateDisplay(r.storage):''}" onchange="updateField('${id}','storage',parseLocalDate(this.value))" placeholder="dd/mm/yyyy"/></td>
-    <td class="edit-cell"><input type="text" value="${fmtDateDisplay(r.rcvd)!=='—'?fmtDateDisplay(r.rcvd):''}" onchange="updateField('${id}','rcvd',parseLocalDate(this.value))" placeholder="dd/mm/yyyy"/></td>
+    <td class="edit-cell"><input type="date" value="${fmtDateInput(r.eta)}" onchange="updateField('${id}','eta',this.value)"/></td>
+    <td class="edit-cell"><input type="date" value="${fmtDateInput(r.storage)}" onchange="updateField('${id}','storage',this.value)"/></td>
+    <td class="edit-cell"><input type="date" value="${fmtDateInput(r.rcvd)}" onchange="updateField('${id}','rcvd',this.value)"/></td>
     <td style="text-align:center;color:#94a3b8;font-size:11px">${calcDays(r.eta)}d</td>
     <td class="edit-cell"><select onchange="updateField('${id}','status',this.value)">${statusOpts(r.status)}</select></td>
     <td class="edit-cell" style="text-align:center"><select onchange="updateField('${id}','clearer',this.value)">${clearerOpts(r.clearer||'')}</select></td>
