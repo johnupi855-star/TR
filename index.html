@@ -52,8 +52,9 @@
   .s-SB{background:#f3e8ff;color:#6b21a8}
   .s-SO{background:#fee2e2;color:#991b1b}
   .s-N{background:#f1f5f9;color:#475569}
-  .c-RELAN{background:#e0f2fe;color:#0369a1}
-  .c-MAHABA{background:#fce7f3;color:#9d174d}
+  .c-Relan{background:#e0f2fe;color:#0369a1}
+  td:nth-child(12){width:65px;min-width:65px;max-width:65px}
+  .c-Mahaba{background:#fce7f3;color:#9d174d}
   .c-BADRY{background:#f0fdf4;color:#166534}
   .days-ok{color:#16a34a;font-weight:600}
   .days-warn{color:#d97706;font-weight:600}
@@ -134,7 +135,7 @@
     <select id="fBank"><option value="">كل البنوك</option><option>QNB</option><option>NBE</option><option>ATJ</option></select>
     <select id="fStatus"><option value="">كل الحالات</option><option value="W">W</option><option value="B">B</option><option value="O">O</option><option value="F">F</option><option value="H">H</option><option value="C">C</option><option value="N">N</option><option value="W/O">W/O</option><option value="S-O">S-O</option><option value="S-B">S-B</option><option value="S-W">S-W</option></select>
     <select id="fSupplier"><option value="">كل الموردين</option><option>Zaurak</option><option>Navigator</option></select>
-    <select id="fClearer"><option value="">كل الـ Clearers</option><option>RELAN</option><option>MAHABA</option><option>El Badry</option></select>
+    <select id="fClearer"><option value="">Clearers</option><option>Relan</option><option>Mahaba</option><option>El Badry</option></select>
     <input id="fSearch" type="text" placeholder="بحث BL / عميل / بضاعة / Ref..."/>
     <button class="btn btn-edit" id="btnToggleEdit" onclick="toggleEdit()">✏️ Edit Mode</button>
     <button class="btn btn-add" id="btnAdd" style="display:none" onclick="addRow()">+ شحنة جديدة</button>
@@ -147,7 +148,7 @@
       <colgroup>
         <col style="width:115px"><col style="width:130px"><col style="width:100px"><col style="width:55px">
         <col style="width:50px"><col style="width:88px"><col style="width:52px"><col style="width:55px">
-        <col style="width:55px"><col style="width:44px"><col style="width:44px"><col><col style="width:11px"><col style="width:68px">
+        <col style="width:55px"><col style="width:44px"><col style="width:44px"><col style="width:auto"><col style="width:65px"><col style="width:68px">
       </colgroup>
       <thead><tr>
         <th>BL No. / Ref</th><th>بضاعة</th><th>عميل / مورد</th><th>بنك</th>
@@ -521,7 +522,7 @@ function calcDays(eta) {
 function statusOpts(cur) { return ['W','B','O','F','H','C','N','W/O','S-O','S-B','S-W'].map(s => `<option value="${s}"${s===cur?' selected':''}>${s}</option>`).join('') }
 function bankOpts(cur)   { return ['QNB','NBE','ATJ'].map(b => `<option${b===cur?' selected':''}>${b}</option>`).join('') }
 function suppOpts(cur)   { return ['Zaurak','Navigator'].map(s => `<option${s===cur?' selected':''}>${s}</option>`).join('') }
-function clearerOpts(cur) { return ['','RELAN','MAHABA','El Badry'].map(c => `<option value="${c}"${c===cur?' selected':''}>${c||'—'}</option>`).join('') }
+function clearerOpts(cur) { return ['','Relan','Mahaba','El Badry'].map(c => `<option value="${c}"${c===cur?' selected':''}>${c||'—'}</option>`).join('') }
 
 // Parse any date format → YYYY-MM-DD for <input type="date">
 function fmtDateInput(v) {
@@ -560,7 +561,7 @@ function viewRow(r) {
     <td style="font-size:11px">${fmtDateDisplay(r.rcvd)}</td>
     <td class="${d===null?'days-neg':daysCls(d)}">${d===null?'—':d}</td>
     <td><span class="badge ${statusCls(r.status)}">${r.status}</span></td>
-    <td style="text-align:center"><span class="badge ${r.clearer==='RELAN'?'c-RELAN':r.clearer==='MAHABA'?'c-MAHABA':r.clearer==='El Badry'?'c-BADRY':'s-N'}">${r.clearer||'—'}</span></td>
+    <td style="text-align:center"><span class="badge ${r.clearer==='Relan'?'c-Relan':r.clearer==='Mahaba'?'c-Mahaba':r.clearer==='El Badry'?'c-BADRY':'s-N'}">${r.clearer||'—'}</span></td>
     <td style="color:#666;font-size:11px;word-break:break-word;min-width:200px">${r.comment||'—'}</td>
     <td><button class="icon-btn" onclick="toggleEdit()" title="تعديل">✏️</button></td>`;
 }
