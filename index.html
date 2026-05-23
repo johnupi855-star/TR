@@ -160,7 +160,7 @@
 // ════════════════════════════════════════════════════════════
 //  CONFIG — paste your deployed Apps Script URL here
 // ════════════════════════════════════════════════════════════
-const API_URL = 'https://script.google.com/macros/s/AKfycbwKf1YB2P8alIRv2tRfpPg7C-fD4sGLNA2kk5QkXPkfc2ySqVRzdOucwnyMN6I7ol3g/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycby81Ws4igpkEqqh-mDhw6HDl3vz3K3bU1UcDidZmth-_N5cjglmy5bAe44FrFntIjS9/exec';
 
 const AUTO_REFRESH_INTERVAL = 30000; // 30 seconds
 
@@ -200,43 +200,78 @@ function toast(msg, type = 'info', duration = 3000) {
 
 // ════════════════════════════════════════════════════════════
 //  API LAYER
-//  الحل النهائي: fetch مع mode:'no-cors' للكتابة
-//  والقراءة عن طريق GAS URL مع ?action=read مباشرة
-//  GAS بيرجع JSON على الـ read بدون redirect مشكلة
-//  الكتابة: no-cors fire-and-forget + loadData بعدها للتأكيد
+//  القراءة : fetch عادي — GAS بيرجع JSON صح
+//  الكتابة : form POST داخل iframe مخفي
+//            بيتجاوز CORS redirect تماماً
 // ════════════════════════════════════════════════════════════
 
 async function apiGetAll() {
   const url = API_URL + '?action=read&t=' + Date.now();
-  const res = await fetch(url, { method: 'GET', redirect: 'follow' });
+  const res  = await fetch(url, { redirect: 'follow' });
   const text = await res.text();
   let data;
-  try { data = JSON.parse(text); } 
-  catch(e) { throw new Error('GAS response error: ' + text.slice(0,100)); }
-  if (data.error) throw new Error(data.error);
+  try { data = JSON.parse(text); }
+  catch(e) { throw new Error('GAS parse error'); }
+  if (data && data.error) throw new Error(data.error);
   return Array.isArray(data) ? data : [];
 }
 
-// كتابة عن طريق no-cors ثم loadData للتأكيد
-async function gasWrite(params) {
-  const url = new URL(API_URL);
-  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, String(v)));
-  // no-cors: المتصفح بيبعت بدون preflight ومفيش CORS block
-  await fetch(url.toString(), { method: 'GET', mode: 'no-cors' });
-  // استنى شوية عشان GAS يحفظ
-  await new Promise(r => setTimeout(r, 1500));
+// Form POST داخل iframe — بيتجاوز CORS تماماً
+function gasFormPost(params) {
+  return new Promise((resolve) => {
+    const iframeId = 'gas_iframe_' + Date.now();
+    const formId   = 'gas_form_'   + Date.now();
+
+    const iframe = document.createElement('iframe');
+    iframe.id    = iframeId;
+    iframe.name  = iframeId;
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+
+    const form   = document.createElement('form');
+    form.id      = formId;
+    form.method  = 'POST';
+    form.action  = API_URL;
+    form.target  = iframeId;
+    form.style.display = 'none';
+
+    // كل parameter يتحط كـ hidden input
+    Object.entries(params).forEach(([k, v]) => {
+      const input = document.createElement('input');
+      input.type  = 'hidden';
+      input.name  = k;
+      input.value = String(v);
+      form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+
+    // بعد الـ load أو 4 ثواني → نعتبره نجح
+    const cleanup = () => {
+      setTimeout(() => {
+        iframe.remove();
+        form.remove();
+      }, 500);
+      resolve(true);
+    };
+
+    iframe.onload = cleanup;
+    setTimeout(cleanup, 4000);
+
+    form.submit();
+  });
 }
 
 async function apiCreate(row) {
-  await gasWrite({ action: 'create', data: JSON.stringify(row) });
+  await gasFormPost({ action: 'create', data: JSON.stringify(row) });
 }
 
 async function apiUpdate(row) {
-  await gasWrite({ action: 'update', data: JSON.stringify(row) });
+  await gasFormPost({ action: 'update', data: JSON.stringify(row) });
 }
 
 async function apiDelete(id) {
-  await gasWrite({ action: 'delete', id: String(id) });
+  await gasFormPost({ action: 'delete', id: String(id) });
 }
 
 // ════════════════════════════════════════════════════════════
@@ -256,10 +291,10 @@ function validateRow(r) {
 //  DUPLICATE ID GUARD
 // ════════════════════════════════════════════════════════════
 function uniqueId() {
-  let id = String(Date.now());
-  const existing = new Set(rows.map(r => String(r.id)));
-  while (existing.has(id)) id = String(Number(id) + 1);
-  return id;
+  const existing = new Set(rows.map(r => Number(r.id)).filter(n => n < 100000));
+  let id = 101;
+  while (existing.has(id)) id++;
+  return String(id);
 }
 
 // ════════════════════════════════════════════════════════════
