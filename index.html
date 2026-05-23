@@ -30,7 +30,7 @@
   .btn-edit{border-color:#1a3a5c;color:#1a3a5c}
   .btn-add{border-color:#1a7a4a;color:#1a7a4a}
   .tbl-wrap{overflow-x:auto;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
-  table{width:100%;border-collapse:collapse;background:#fff;font-size:12px;table-layout:fixed}
+  table{width:100%;border-collapse:collapse;background:#fff;font-size:12px}
   th{background:#1a3a5c;color:#e8edf5;font-weight:500;padding:9px 8px;text-align:left;white-space:nowrap;font-size:11px}
   th:first-child{border-radius:8px 0 0 0}
   th:last-child{border-radius:0 8px 0 0}
@@ -42,8 +42,13 @@
   .bank-NBE{background:#dcfce7;color:#166534}
   .bank-ATJ{background:#fef9c3;color:#854d0e}
   .s-W{background:#dbeafe;color:#1e40af}
+  .s-F{background:#fef3c7;color:#92400e}
+  .s-H{background:#ffe4e6;color:#9f1239}
+  .s-C{background:#d1fae5;color:#065f46}
+  .s-WO{background:#e0e7ff;color:#3730a3}
   .s-B{background:#fef9c3;color:#854d0e}
   .s-O{background:#dcfce7;color:#166534}
+  .s-SW{background:#fef9c3;color:#854d0e}
   .s-SB{background:#f3e8ff;color:#6b21a8}
   .s-SO{background:#fee2e2;color:#991b1b}
   .s-N{background:#f1f5f9;color:#475569}
@@ -55,7 +60,7 @@
   .days-danger{color:#dc2626;font-weight:600}
   .days-neg{color:#94a3b8}
   .edit-cell input,.edit-cell select,.edit-cell textarea{width:100%;font-size:11px;padding:3px 5px;border-radius:4px;border:1px solid #c7d2e0;background:#fffef8;color:#222;font-family:inherit}
-  .edit-cell textarea{height:48px;resize:vertical}
+  .edit-cell textarea{height:38px;resize:vertical;font-size:12px;min-width:100%}
   .icon-btn{border:none;background:transparent;cursor:pointer;color:#94a3b8;font-size:15px;padding:3px 5px;border-radius:4px}
   .icon-btn:hover{background:#f1f5f9;color:#334155}
   .icon-btn.del:hover{color:#dc2626;background:#fee2e2}
@@ -127,7 +132,7 @@
 
   <div class="toolbar">
     <select id="fBank"><option value="">كل البنوك</option><option>QNB</option><option>NBE</option><option>ATJ</option></select>
-    <select id="fStatus"><option value="">كل الحالات</option><option value="W">W — جاري</option><option value="B">B — انتظار</option><option value="O">O — تم تخزين</option><option value="S-B">S-B</option><option value="S-O">S-O</option><option value="N">N — جديد</option></select>
+    <select id="fStatus"><option value="">كل الحالات</option><option value="W">W</option><option value="B">B</option><option value="O">O</option><option value="F">F</option><option value="H">H</option><option value="C">C</option><option value="N">N</option><option value="W/O">W/O</option><option value="S-O">S-O</option><option value="S-B">S-B</option><option value="S-W">S-W</option></select>
     <select id="fSupplier"><option value="">كل الموردين</option><option>Zaurak</option><option>Navigator</option></select>
     <select id="fClearer"><option value="">كل الـ Clearers</option><option>RELAN</option><option>MAHABA</option><option>El Badry</option></select>
     <input id="fSearch" type="text" placeholder="بحث BL / عميل / بضاعة / Ref..."/>
@@ -142,7 +147,7 @@
       <colgroup>
         <col style="width:115px"><col style="width:130px"><col style="width:100px"><col style="width:55px">
         <col style="width:50px"><col style="width:88px"><col style="width:52px"><col style="width:55px">
-        <col style="width:55px"><col style="width:44px"><col style="width:44px"><col style="width:260px"><col style="width:55px"><col style="width:68px">
+        <col style="width:55px"><col style="width:44px"><col style="width:44px"><col><col style="width:11px"><col style="width:68px">
       </colgroup>
       <thead><tr>
         <th>BL No. / Ref</th><th>بضاعة</th><th>عميل / مورد</th><th>بنك</th>
@@ -162,7 +167,7 @@
 // ════════════════════════════════════════════════════════════
 const API_URL = 'https://script.google.com/macros/s/AKfycby81Ws4igpkEqqh-mDhw6HDl3vz3K3bU1UcDidZmth-_N5cjglmy5bAe44FrFntIjS9/exec';
 
-const AUTO_REFRESH_INTERVAL = 30000; // 30 seconds
+const AUTO_REFRESH_INTERVAL = 60000; // 60 seconds
 
 // ════════════════════════════════════════════════════════════
 //  STATE
@@ -497,9 +502,23 @@ function getFiltered() {
 // ════════════════════════════════════════════════════════════
 function fmtAmt(v) { return '$' + Number(v).toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 }) }
 function bankCls(b) { return b === 'QNB' ? 'bank-QNB' : b === 'NBE' ? 'bank-NBE' : b === 'ATJ' ? 'bank-ATJ' : 'bank-QNB' }
-function statusCls(s) { return s === 'W' ? 's-W' : s === 'B' ? 's-B' : s === 'O' ? 's-O' : s === 'S-B' ? 's-SB' : s === 'S-O' ? 's-SO' : 's-N' }
+function statusCls(s) { const m={'W':'s-W','B':'s-B','O':'s-O','S-B':'s-SB','S-O':'s-SO','S-W':'s-SW','F':'s-F','H':'s-H','C':'s-C','N':'s-N','W/O':'s-WO'}; return m[s]||'s-N'; }
 function daysCls(d) { d = Number(d); if (d <= 0) return 'days-neg'; if (d > 10) return 'days-danger'; if (d > 4) return 'days-warn'; return 'days-ok' }
-function statusOpts(cur) { return ['W','B','O','S-B','S-O','N'].map(s => `<option value="${s}"${s===cur?' selected':''}>${s}</option>`).join('') }
+
+// حساب الأيام من اليوم لحد ETA
+function calcDays(eta) {
+  if (!eta) return null;
+  // نأخذ الجزء YYYY-MM-DD بس بدون وقت
+  const raw = String(eta).includes('T') ? String(eta).split('T')[0] : String(eta).slice(0,10);
+  const parts = raw.split('-');
+  if (parts.length !== 3) return null;
+  const etaDate = new Date(Number(parts[0]), Number(parts[1])-1, Number(parts[2]));
+  if (isNaN(etaDate)) return null;
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  return Math.round((etaDate - today) / (1000 * 60 * 60 * 24));
+}
+function statusOpts(cur) { return ['W','B','O','F','H','C','N','W/O','S-O','S-B','S-W'].map(s => `<option value="${s}"${s===cur?' selected':''}>${s}</option>`).join('') }
 function bankOpts(cur)   { return ['QNB','NBE','ATJ'].map(b => `<option${b===cur?' selected':''}>${b}</option>`).join('') }
 function suppOpts(cur)   { return ['Zaurak','Navigator'].map(s => `<option${s===cur?' selected':''}>${s}</option>`).join('') }
 function clearerOpts(cur) { return ['','RELAN','MAHABA','El Badry'].map(c => `<option value="${c}"${c===cur?' selected':''}>${c||'—'}</option>`).join('') }
@@ -511,19 +530,24 @@ function fmtDateInput(v) {
   if (isNaN(d)) return '';
   return d.toISOString().slice(0, 10);
 }
-// Display date as dd/mm/yyyy
+// Display date as dd/mm/yyyy — strips time always
 function fmtDateDisplay(v) {
   if (!v) return '—';
+  // لو فيه T (timestamp) نأخذ الجزء الأول بس
+  if (String(v).includes('T')) {
+    const parts = String(v).split('T')[0].split('-');
+    if (parts.length === 3) return parts[2]+'/'+parts[1]+'/'+parts[0];
+  }
   const d = new Date(v);
   if (isNaN(d)) return v;
-  const dd = String(d.getDate()).padStart(2,'0');
-  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd   = String(d.getDate()).padStart(2,'0');
+  const mm   = String(d.getMonth()+1).padStart(2,'0');
   const yyyy = d.getFullYear();
-  return `${dd}/${mm}/${yyyy}`;
+  return dd+'/'+mm+'/'+yyyy;
 }
 
 function viewRow(r) {
-  const d = Number(r.days);
+  const d = calcDays(r.eta);
   return `
     <td><div style="font-weight:600;font-size:11px">${r.bl}</div><div class="sub-text">${r.ref}</div></td>
     <td>${r.goods}</td>
@@ -532,12 +556,12 @@ function viewRow(r) {
     <td>${r.cntr}</td>
     <td style="font-weight:600">${fmtAmt(r.amount)}</td>
     <td>${fmtDateDisplay(r.eta)}</td>
-    <td style="font-size:11px">${r.storage||'—'}</td>
-    <td style="font-size:11px">${r.rcvd||'—'}</td>
-    <td class="${daysCls(d)}">${d>0?d+'d':'—'}</td>
+    <td style="font-size:11px">${fmtDateDisplay(r.storage)}</td>
+    <td style="font-size:11px">${fmtDateDisplay(r.rcvd)}</td>
+    <td class="${d===null?'days-neg':daysCls(d)}">${d===null?'—':d}</td>
     <td><span class="badge ${statusCls(r.status)}">${r.status}</span></td>
     <td style="text-align:center"><span class="badge ${r.clearer==='RELAN'?'c-RELAN':r.clearer==='MAHABA'?'c-MAHABA':r.clearer==='El Badry'?'c-BADRY':'s-N'}">${r.clearer||'—'}</span></td>
-    <td style="color:#666;font-size:11px">${r.comment||'—'}</td>
+    <td style="color:#666;font-size:11px;word-break:break-word;min-width:200px">${r.comment||'—'}</td>
     <td><button class="icon-btn" onclick="toggleEdit()" title="تعديل">✏️</button></td>`;
 }
 
@@ -557,9 +581,9 @@ function editRow(r) {
     <td class="edit-cell"><input value="${esc(r.cntr)}"    onchange="updateField('${id}','cntr',this.value)"/></td>
     <td class="edit-cell"><input type="number" value="${r.amount}" onchange="updateField('${id}','amount',this.value)" step="0.01"/></td>
     <td class="edit-cell"><input type="date" value="${fmtDateInput(r.eta)}" onchange="updateField('${id}','eta',this.value)"/></td>
-    <td class="edit-cell"><input value="${esc(r.storage)}" onchange="updateField('${id}','storage',this.value)"/></td>
-    <td class="edit-cell"><input value="${esc(r.rcvd)}"    onchange="updateField('${id}','rcvd',this.value)"/></td>
-    <td class="edit-cell"><input type="number" value="${r.days}" onchange="updateField('${id}','days',this.value)"/></td>
+    <td class="edit-cell"><input type="date" value="${fmtDateInput(r.storage)}" onchange="updateField('${id}','storage',this.value)"/></td>
+    <td class="edit-cell"><input type="date" value="${fmtDateInput(r.rcvd)}" onchange="updateField('${id}','rcvd',this.value)"/></td>
+    <td style="text-align:center;color:#94a3b8;font-size:11px">${calcDays(r.eta)}d</td>
     <td class="edit-cell"><select onchange="updateField('${id}','status',this.value)">${statusOpts(r.status)}</select></td>
     <td class="edit-cell" style="text-align:center"><select onchange="updateField('${id}','clearer',this.value)">${clearerOpts(r.clearer||'')}</select></td>
     <td class="edit-cell"><textarea onchange="updateField('${id}','comment',this.value)">${esc(r.comment)}</textarea></td>
@@ -580,7 +604,7 @@ function updateSummary(filtered) {
   const total  = filtered.reduce((s,r) => s + Number(r.amount), 0);
   const byBank = { QNB:0, NBE:0, ATJ:0 };
   filtered.forEach(r => { if (byBank[r.bank] !== undefined) byBank[r.bank] += Number(r.amount) });
-  const inPort = filtered.filter(r => Number(r.days) > 0).length;
+  const inPort = filtered.filter(r => { const d=calcDays(r.eta); return d!==null && d>0; }).length;
   document.getElementById('summary').innerHTML = `
     <div class="card"><div class="card-label">إجمالي المبالغ</div><div class="card-val">${fmtAmt(total)}</div><div class="card-sub">${filtered.length} شحنة</div></div>
     <div class="card"><div class="card-label">QNB — Zaurak</div><div class="card-val">${fmtAmt(byBank.QNB)}</div><div class="card-sub">${filtered.filter(r=>r.bank==='QNB').length} شحنة</div></div>
