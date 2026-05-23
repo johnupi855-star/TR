@@ -52,9 +52,9 @@
   .s-SB{background:#f3e8ff;color:#6b21a8}
   .s-SO{background:#fee2e2;color:#991b1b}
   .s-N{background:#f1f5f9;color:#475569}
-  .c-Relan{background:#e0f2fe;color:#0369a1}
+  .c-RELAN{background:#e0f2fe;color:#0369a1}
   td:nth-child(12){width:65px;min-width:65px;max-width:65px}
-  .c-Mahaba{background:#fce7f3;color:#9d174d}
+  .c-MAHABA{background:#fce7f3;color:#9d174d}
   .c-BADRY{background:#f0fdf4;color:#166534}
   .days-ok{color:#16a34a;font-weight:600}
   .days-warn{color:#d97706;font-weight:600}
@@ -135,7 +135,7 @@
     <select id="fBank"><option value="">كل البنوك</option><option>QNB</option><option>NBE</option><option>ATJ</option></select>
     <select id="fStatus"><option value="">كل الحالات</option><option value="W">W</option><option value="B">B</option><option value="O">O</option><option value="F">F</option><option value="H">H</option><option value="C">C</option><option value="N">N</option><option value="W/O">W/O</option><option value="S-O">S-O</option><option value="S-B">S-B</option><option value="S-W">S-W</option></select>
     <select id="fSupplier"><option value="">كل الموردين</option><option>Zaurak</option><option>Navigator</option></select>
-    <select id="fClearer"><option value="">Clearers</option><option>Relan</option><option>Mahaba</option><option>El Badry</option></select>
+    <select id="fClearer"><option value="">كل الـ Clearers</option><option>RELAN</option><option>MAHABA</option><option>El Badry</option></select>
     <input id="fSearch" type="text" placeholder="بحث BL / عميل / بضاعة / Ref..."/>
     <button class="btn btn-edit" id="btnToggleEdit" onclick="toggleEdit()">✏️ Edit Mode</button>
     <button class="btn btn-add" id="btnAdd" style="display:none" onclick="addRow()">+ شحنة جديدة</button>
@@ -509,42 +509,44 @@ function daysCls(d) { d = Number(d); if (d <= 0) return 'days-neg'; if (d > 10) 
 // حساب الأيام من اليوم لحد ETA
 function calcDays(eta) {
   if (!eta) return null;
-  // نأخذ الجزء YYYY-MM-DD بس بدون وقت
-  const raw = String(eta).includes('T') ? String(eta).split('T')[0] : String(eta).slice(0,10);
+  const s   = String(eta);
+  const raw = s.includes('T') ? s.split('T')[0] : s.slice(0,10);
   const parts = raw.split('-');
   if (parts.length !== 3) return null;
+  // نبني التاريخ بـ local time مباشرة بدون UTC
   const etaDate = new Date(Number(parts[0]), Number(parts[1])-1, Number(parts[2]));
   if (isNaN(etaDate)) return null;
   const today = new Date();
   today.setHours(0,0,0,0);
+  etaDate.setHours(0,0,0,0);
   return Math.round((etaDate - today) / (1000 * 60 * 60 * 24));
 }
 function statusOpts(cur) { return ['W','B','O','F','H','C','N','W/O','S-O','S-B','S-W'].map(s => `<option value="${s}"${s===cur?' selected':''}>${s}</option>`).join('') }
 function bankOpts(cur)   { return ['QNB','NBE','ATJ'].map(b => `<option${b===cur?' selected':''}>${b}</option>`).join('') }
 function suppOpts(cur)   { return ['Zaurak','Navigator'].map(s => `<option${s===cur?' selected':''}>${s}</option>`).join('') }
-function clearerOpts(cur) { return ['','Relan','Mahaba','El Badry'].map(c => `<option value="${c}"${c===cur?' selected':''}>${c||'—'}</option>`).join('') }
+function clearerOpts(cur) { return ['','RELAN','MAHABA','El Badry'].map(c => `<option value="${c}"${c===cur?' selected':''}>${c||'—'}</option>`).join('') }
 
 // Parse any date format → YYYY-MM-DD for <input type="date">
 function fmtDateInput(v) {
   if (!v) return '';
-  const d = new Date(v);
-  if (isNaN(d)) return '';
-  return d.toISOString().slice(0, 10);
+  const s = String(v);
+  // لو فيه T خد الجزء الأول بس
+  const dateOnly = s.includes('T') ? s.split('T')[0] : s.slice(0,10);
+  // تأكد إن الفورمات YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) return dateOnly;
+  return '';
 }
 // Display date as dd/mm/yyyy — strips time always
 function fmtDateDisplay(v) {
   if (!v) return '—';
-  // لو فيه T (timestamp) نأخذ الجزء الأول بس
-  if (String(v).includes('T')) {
-    const parts = String(v).split('T')[0].split('-');
-    if (parts.length === 3) return parts[2]+'/'+parts[1]+'/'+parts[0];
+  const s = String(v);
+  // خد YYYY-MM-DD بس بدون أي تحويل
+  const dateOnly = s.includes('T') ? s.split('T')[0] : s.slice(0,10);
+  const parts = dateOnly.split('-');
+  if (parts.length === 3 && parts[0].length === 4) {
+    return parts[2] + '/' + parts[1] + '/' + parts[0];
   }
-  const d = new Date(v);
-  if (isNaN(d)) return v;
-  const dd   = String(d.getDate()).padStart(2,'0');
-  const mm   = String(d.getMonth()+1).padStart(2,'0');
-  const yyyy = d.getFullYear();
-  return dd+'/'+mm+'/'+yyyy;
+  return v || '—';
 }
 
 function viewRow(r) {
@@ -561,7 +563,7 @@ function viewRow(r) {
     <td style="font-size:11px">${fmtDateDisplay(r.rcvd)}</td>
     <td class="${d===null?'days-neg':daysCls(d)}">${d===null?'—':d}</td>
     <td><span class="badge ${statusCls(r.status)}">${r.status}</span></td>
-    <td style="text-align:center"><span class="badge ${r.clearer==='Relan'?'c-Relan':r.clearer==='Mahaba'?'c-Mahaba':r.clearer==='El Badry'?'c-BADRY':'s-N'}">${r.clearer||'—'}</span></td>
+    <td style="text-align:center"><span class="badge ${r.clearer==='RELAN'?'c-RELAN':r.clearer==='MAHABA'?'c-MAHABA':r.clearer==='El Badry'?'c-BADRY':'s-N'}">${r.clearer||'—'}</span></td>
     <td style="color:#666;font-size:11px;word-break:break-word;min-width:200px">${r.comment||'—'}</td>
     <td><button class="icon-btn" onclick="toggleEdit()" title="تعديل">✏️</button></td>`;
 }
