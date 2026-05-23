@@ -527,6 +527,23 @@ function suppOpts(cur)   { return ['Zaurak','Navigator'].map(s => `<option${s===
 function clearerOpts(cur) { return ['','RELAN','MAHABA','El Badry'].map(c => `<option value="${c}"${c===cur?' selected':''}>${c||'—'}</option>`).join('') }
 
 // Parse any date format → YYYY-MM-DD for <input type="date">
+// تحويل dd/mm/yyyy → YYYY-MM-DD نص بحت بدون أي Date object
+function parseLocalDate(v) {
+  if (!v) return '';
+  v = v.trim();
+  // لو دخل YYYY-MM-DD يرجعه مباشرة
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+  // لو دخل dd/mm/yyyy
+  const parts = v.split('/');
+  if (parts.length === 3) {
+    const dd = parts[0].padStart(2,'0');
+    const mm = parts[1].padStart(2,'0');
+    const yyyy = parts[2].length === 2 ? '20'+parts[2] : parts[2];
+    return yyyy+'-'+mm+'-'+dd;
+  }
+  return v;
+}
+
 function fmtDateInput(v) {
   if (!v) return '';
   const s = String(v);
@@ -583,9 +600,9 @@ function editRow(r) {
     <td class="edit-cell"><select onchange="updateField('${id}','bank',this.value)">${bankOpts(r.bank)}</select></td>
     <td class="edit-cell"><input value="${esc(r.cntr)}"    onchange="updateField('${id}','cntr',this.value)"/></td>
     <td class="edit-cell"><input type="number" value="${r.amount}" onchange="updateField('${id}','amount',this.value)" step="0.01"/></td>
-    <td class="edit-cell"><input type="date" value="${fmtDateInput(r.eta)}" onchange="updateField('${id}','eta',this.value)"/></td>
-    <td class="edit-cell"><input type="date" value="${fmtDateInput(r.storage)}" onchange="updateField('${id}','storage',this.value)"/></td>
-    <td class="edit-cell"><input type="date" value="${fmtDateInput(r.rcvd)}" onchange="updateField('${id}','rcvd',this.value)"/></td>
+    <td class="edit-cell"><input type="text" value="${fmtDateDisplay(r.eta)!=='—'?fmtDateDisplay(r.eta):''}" onchange="updateField('${id}','eta',parseLocalDate(this.value))" placeholder="dd/mm/yyyy"/></td>
+    <td class="edit-cell"><input type="text" value="${fmtDateDisplay(r.storage)!=='—'?fmtDateDisplay(r.storage):''}" onchange="updateField('${id}','storage',parseLocalDate(this.value))" placeholder="dd/mm/yyyy"/></td>
+    <td class="edit-cell"><input type="text" value="${fmtDateDisplay(r.rcvd)!=='—'?fmtDateDisplay(r.rcvd):''}" onchange="updateField('${id}','rcvd',parseLocalDate(this.value))" placeholder="dd/mm/yyyy"/></td>
     <td style="text-align:center;color:#94a3b8;font-size:11px">${calcDays(r.eta)}d</td>
     <td class="edit-cell"><select onchange="updateField('${id}','status',this.value)">${statusOpts(r.status)}</select></td>
     <td class="edit-cell" style="text-align:center"><select onchange="updateField('${id}','clearer',this.value)">${clearerOpts(r.clearer||'')}</select></td>
