@@ -146,12 +146,12 @@
   <div class="tbl-wrap">
     <table>
       <colgroup>
-        <col style="width:115px"><col style="width:130px"><col style="width:100px"><col style="width:55px">
+        <col style="width:115px"><col style="width:60px"><col style="width:130px"><col style="width:100px"><col style="width:55px">
         <col style="width:50px"><col style="width:88px"><col style="width:52px"><col style="width:55px">
         <col style="width:55px"><col style="width:44px"><col style="width:44px"><col style="width:auto"><col style="width:65px"><col style="width:68px">
       </colgroup>
       <thead><tr>
-        <th>BL No. / Ref</th><th>بضاعة</th><th>عميل / مورد</th><th>بنك</th>
+        <th>BL No. / Ref</th><th>SL</th><th>بضاعة</th><th>عميل / مورد</th><th>بنك</th>
         <th>حاويات</th><th>مبلغ $</th><th>ETA</th><th>تخزين</th>
         <th>وصل</th><th>أيام</th><th>حالة</th><th style="text-align:center">Clearer</th><th>ملاحظات</th><th>⚙️</th>
       </tr></thead>
@@ -166,7 +166,7 @@
 // ════════════════════════════════════════════════════════════
 //  CONFIG — paste your deployed Apps Script URL here
 // ════════════════════════════════════════════════════════════
-const API_URL = 'https://script.google.com/macros/s/AKfycbyPMnZJEXwtg5Fe2hFFeUgfHHZn_UeYky1EQH3MtHjfAFZqG9sQm6ncwj69iy3SADA/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbytqUwottDkajsnLeGgeh6dFLaKA8tiDvkYHJ-DOc-tZCoTacTRxijDFM3QHCdJZwgX/exec';
 
 const AUTO_REFRESH_INTERVAL = 60000; // 60 seconds
 
@@ -424,6 +424,7 @@ async function addRow() {
   const newRow = {
     id      : uniqueId(),
     bl      : 'BL-NEW',
+    sl      : '',
     ref     : '',
     goods   : '',
     supplier: 'Navigator',
@@ -577,6 +578,7 @@ function viewRow(r) {
   const d = calcDays(r.eta);
   return `
     <td><div style="font-weight:600;font-size:11px">${r.bl}</div><div class="sub-text">${r.ref}</div></td>
+    <td style="font-size:11px">${r.sl||'—'}</td>
     <td>${r.goods}</td>
     <td><div>${r.client}</div><div class="sub-text">${r.supplier}</div></td>
     <td><span class="badge ${bankCls(r.bank)}">${r.bank}</span></td>
@@ -599,6 +601,7 @@ function editRow(r) {
       <input value="${esc(r.bl)}"    onchange="updateField('${id}','bl',this.value)"    style="margin-bottom:2px"/>
       <input value="${esc(r.ref)}"   onchange="updateField('${id}','ref',this.value)"   placeholder="Ref..."/>
     </td>
+    <td class="edit-cell"><input value="${esc(r.sl||'')}" onchange="updateField('${id}','sl',this.value)" placeholder="SL..."/></td>
     <td class="edit-cell"><input value="${esc(r.goods)}"   onchange="updateField('${id}','goods',this.value)"/></td>
     <td class="edit-cell">
       <input value="${esc(r.client)}" onchange="updateField('${id}','client',this.value)" style="margin-bottom:2px"/>
