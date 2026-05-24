@@ -60,8 +60,8 @@
   .days-warn{color:#d97706;font-weight:600}
   .days-danger{color:#dc2626;font-weight:600}
   .days-neg{color:#94a3b8}
-  .edit-cell input,.edit-cell select,.edit-cell textarea{width:100%;font-size:11px;padding:3px 5px;border-radius:4px;border:1px solid #c7d2e0;background:#fffef8;color:#222;font-family:inherit}
-  .edit-cell textarea{height:38px;resize:vertical;font-size:12px;min-width:100%}
+  .edit-cell input,.edit-cell select,.edit-cell textarea{width:100%;font-size:11px;padding:2px 3px;border-radius:4px;border:1px solid #c7d2e0;background:#fffef8;color:#222;font-family:inherit}
+  .edit-cell textarea{height:60px;resize:vertical;font-size:12px;width:100%;box-sizing:border-box}
   .icon-btn{border:none;background:transparent;cursor:pointer;color:#94a3b8;font-size:15px;padding:3px 5px;border-radius:4px}
   .icon-btn:hover{background:#f1f5f9;color:#334155}
   .icon-btn.del:hover{color:#dc2626;background:#fee2e2}
@@ -147,8 +147,8 @@
     <table>
       <colgroup>
         <col style="width:115px"><col style="width:60px"><col style="width:130px"><col style="width:100px"><col style="width:55px">
-        <col style="width:50px"><col style="width:88px"><col style="width:52px"><col style="width:55px">
-        <col style="width:50px"><col style="width:40px"><col style="width:40px"><col><col style="width:70px"><col style="width:68px">
+        <col style="width:50px"><col style="width:88px"><col style="width:24px"><col style="width:55px">
+        <col style="width:50px"><col style="width:18px"><col style="width:18px"><col><col style="width:75px"><col style="width:68px">
       </colgroup>
       <thead><tr>
         <th>BL No. / Ref</th><th>SL</th><th>بضاعة</th><th>عميل / مورد</th><th>بنك</th>
@@ -589,7 +589,7 @@ function viewRow(r) {
     <td style="font-size:11px">${fmtDateDisplay(r.rcvd)}</td>
     <td class="${d===null?'days-neg':daysCls(d)}">${d===null?'—':d}</td>
     <td><span class="badge ${statusCls(r.status)}">${r.status}</span></td>
-    <td style="text-align:center;width:70px;min-width:70px;max-width:70px"><span class="badge ${r.clearer==='Relan'?'c-RELAN':r.clearer==='Mahaba'?'c-MAHABA':r.clearer==='El Badry'?'c-BADRY':'s-N'}">${r.clearer||'—'}</span></td>
+    <td style="text-align:center;width:75px;min-width:75px;max-width:75px"><span class="badge ${r.clearer==='Relan'?'c-RELAN':r.clearer==='Mahaba'?'c-MAHABA':r.clearer==='El Badry'?'c-BADRY':'s-N'}">${r.clearer||'—'}</span></td>
     <td style="color:#666;font-size:11px;word-break:break-word;min-width:200px">${r.comment||'—'}</td>
     <td><button class="icon-btn" onclick="toggleEdit()" title="تعديل">✏️</button></td>`;
 }
@@ -610,13 +610,13 @@ function editRow(r) {
     <td class="edit-cell"><select onchange="updateField('${id}','bank',this.value)">${bankOpts(r.bank)}</select></td>
     <td class="edit-cell"><input value="${esc(r.cntr)}"    onchange="updateField('${id}','cntr',this.value)"/></td>
     <td class="edit-cell"><input type="number" value="${r.amount}" onchange="updateField('${id}','amount',this.value)" step="0.01"/></td>
-    <td class="edit-cell"><input type="date" value="${fmtDateInput(r.eta)}" onchange="updateField('${id}','eta',this.value)"/></td>
-    <td class="edit-cell"><input type="date" value="${fmtDateInput(r.storage)}" onchange="updateField('${id}','storage',this.value)"/></td>
-    <td class="edit-cell"><input type="date" value="${fmtDateInput(r.rcvd)}" onchange="updateField('${id}','rcvd',this.value)"/></td>
+    <td class="edit-cell" style="width:90px;min-width:90px"><input type="date" value="${fmtDateInput(r.eta)}" onchange="updateField('${id}','eta',this.value)" style="width:88px;font-size:10px;padding:1px"/></td>
+    <td class="edit-cell" style="width:90px;min-width:90px"><input type="date" value="${fmtDateInput(r.storage)}" onchange="updateField('${id}','storage',this.value)" style="width:88px;font-size:10px;padding:1px"/></td>
+    <td class="edit-cell" style="width:90px;min-width:90px"><input type="date" value="${fmtDateInput(r.rcvd)}" onchange="updateField('${id}','rcvd',this.value)" style="width:88px;font-size:10px;padding:1px"/></td>
     <td style="text-align:center;color:#94a3b8;font-size:11px">${calcDays(r.eta)}d</td>
     <td class="edit-cell"><select onchange="updateField('${id}','status',this.value)">${statusOpts(r.status)}</select></td>
-    <td class="edit-cell" style="text-align:center"><select onchange="updateField('${id}','clearer',this.value)">${clearerOpts(r.clearer||'')}</select></td>
-    <td class="edit-cell"><textarea onchange="updateField('${id}','comment',this.value)">${esc(r.comment)}</textarea></td>
+    <td class="edit-cell" style="text-align:center;min-width:75px"><select style="width:100%" onchange="updateField('${id}','clearer',this.value)">${clearerOpts(r.clearer||'')}</select></td>
+    <td class="edit-cell" style="min-width:300px"><textarea onchange="updateField('${id}','comment',this.value)" style="width:100%;height:60px">${esc(r.comment)}</textarea></td>
     <td style="white-space:nowrap"><button class="icon-btn save" onclick="manualSave('${id}')" title="حفظ">💾</button><button class="icon-btn del" onclick="deleteRow('${id}')" title="حذف">🗑</button></td>`;
 }
 
