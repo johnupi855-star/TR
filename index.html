@@ -351,17 +351,25 @@ function updateField(id, field, val) {
   const r = rows.find(x => String(x.id) === String(id));
   if (!r) return;
 
+  // لو الحالة بقت F — اسأل المستخدم
+  if (field === 'status' && val === 'F') {
+    const yes = confirm('🎉 الشحنة خلصت!\nهل تريد حذفها من السيستم؟');
+    if (yes) {
+      deleteRow(id);
+      return;
+    }
+    // لو NO — حفظ F بدون حذف
+  }
+
   if (field === 'amount') r[field] = parseFloat(val) || 0;
   else if (field === 'days') r[field] = parseInt(val) || 0;
   else if (['eta','storage','rcvd'].includes(field)) {
-    // حفظ التاريخ كـ YYYY-MM-DD نص بحت
     r[field] = val ? String(val).slice(0,10) : '';
   }
   else r[field] = val;
 
   updateSummary(getFiltered());
 
-  // debounce: wait 600 ms after last keystroke then save
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => persistUpdate(r), 600);
 }
