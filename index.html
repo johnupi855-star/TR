@@ -71,6 +71,17 @@
   .footer{text-align:center;padding:14px;color:#aaa;font-size:11px}
   @media print{.toolbar,.mode-bar,.btn{display:none!important}}
 
+  /* F Status Modal */
+  #fModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center}
+  #fModal.active{display:flex}
+  #fModal .box{background:#fff;border-radius:12px;padding:28px 32px;max-width:360px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+  #fModal .box h3{font-size:22px;margin-bottom:8px}
+  #fModal .box p{font-size:13px;color:#555;margin-bottom:20px}
+  #fModal .btns{display:flex;gap:10px;justify-content:center}
+  #fModal .btns button{padding:9px 24px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none}
+  #fModal .yes{background:#dc2626;color:#fff}
+  #fModal .no{background:#e5e7eb;color:#374151}
+
   /* ── additions only: spinner, toast, saving indicator ── */
   #spinnerOverlay{
     display:none;position:fixed;inset:0;background:rgba(255,255,255,.55);
@@ -157,6 +168,19 @@
       </tr></thead>
       <tbody id="tbody"></tbody>
     </table>
+  </div>
+</div>
+
+<!-- F Status Modal -->
+<div id="fModal">
+  <div class="box">
+    <h3>🎉</h3>
+    <p style="font-size:15px;font-weight:600;color:#166534;margin-bottom:6px">الشحنة خلصت!</h3>
+    <p>هل تريد حذفها من السيستم نهائياً؟</p>
+    <div class="btns">
+      <button class="yes" onclick="fModalYes()">نعم، احذف</button>
+      <button class="no" onclick="fModalNo()">لا، خليها</button>
+    </div>
   </div>
 </div>
 
@@ -351,14 +375,16 @@ function updateField(id, field, val) {
   const r = rows.find(x => String(x.id) === String(id));
   if (!r) return;
 
-  // لو الحالة بقت F — اسأل المستخدم
+  // لو الحالة بقت F — اعرض modal
   if (field === 'status' && val === 'F') {
-    const yes = confirm('🎉 الشحنة خلصت!\nهل تريد حذفها من السيستم؟');
-    if (yes) {
-      deleteRow(id);
-      return;
-    }
-    // لو NO — حفظ F بدون حذف
+    window._fPendingId = id;
+    window._fPendingRow = r;
+    r[field] = val;
+    updateSummary(getFiltered());
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => persistUpdate(r), 600);
+    document.getElementById('fModal').classList.add('active');
+    return;
   }
 
   if (field === 'amount') r[field] = parseFloat(val) || 0;
@@ -675,6 +701,17 @@ document.getElementById('fStatus').addEventListener('change', render);
 document.getElementById('fSupplier').addEventListener('change', render);
 document.getElementById('fSearch').addEventListener('input', render);
 document.getElementById('fClearer').addEventListener('change', render);
+
+function fModalYes() {
+  document.getElementById('fModal').classList.remove('active');
+  if (window._fPendingId) deleteRow(window._fPendingId);
+  window._fPendingId = null;
+}
+
+function fModalNo() {
+  document.getElementById('fModal').classList.remove('active');
+  window._fPendingId = null;
+}
 
 // ════════════════════════════════════════════════════════════
 //  INIT
