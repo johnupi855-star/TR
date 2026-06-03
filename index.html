@@ -116,17 +116,28 @@
 
   .btn[disabled]{opacity:.5;cursor:not-allowed}
 
+  /* Color Picker */
+  .cp-wrap{position:relative;display:inline-block}
+  .cp-btn{display:inline-flex;align-items:center;gap:4px;padding:2px 6px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:10px;font-weight:500;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.06);max-width:80px}
+  .cp-dot{width:9px;height:9px;border-radius:50%;border:1px solid rgba(0,0,0,.1);flex-shrink:0}
+  .cp-menu{display:none;position:fixed;z-index:99999;background:#fff;border-radius:12px;padding:8px;min-width:190px;box-shadow:0 12px 32px rgba(0,0,0,.18);border:1px solid #e5e7eb}
+  .cp-wrap.open .cp-menu{display:block}
+  .cp-opt{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:500;margin-bottom:3px;border:2px solid transparent;transition:border-color .1s}
+  .cp-opt:last-child{margin-bottom:0}
+  .cp-opt:hover{border-color:rgba(0,0,0,.15)}
+  .cp-opt.sel{border-color:#1a3a5c}
+  .cp-opt .cp-dot{width:13px;height:13px}
+
   /* Row Colors */
-  .row-color-1  { background:#f3f4f6 !important } /* لسه موصلتش */
-  .row-color-2  { background:#dbeafe !important } /* وصلت */
-  .row-color-3  { background:#fef9c3 !important } /* في انتظار سحب إذن */
-  .row-color-4  { background:#fef3c7 !important } /* تم سحب الإذن */
-  .row-color-5  { background:#ede9fe !important } /* تحت العمل */
-  .row-color-6  { background:#cffafe !important } /* خرجت */
-  .row-color-7  { background:#ccfbf1 !important } /* مع الناقل */
-  .row-color-8  { background:#dcfce7 !important } /* تم التسليم */
-  .row-color-9  { background:#fee2e2 !important } /* مشكلة */
-  tr[class*="row-color"] td { background:inherit !important }
+  .row-color-1 td { background:#f1f5f9 !important }
+  .row-color-2 td { background:#eff6ff !important }
+  .row-color-3 td { background:#fffbeb !important }
+  .row-color-4 td { background:#fff7ed !important }
+  .row-color-5 td { background:#f5f3ff !important }
+  .row-color-6 td { background:#ecfdf5 !important }
+  .row-color-7 td { background:#f0fdfa !important }
+  .row-color-8 td { background:#f0fdf4 !important }
+  .row-color-9 td { background:#fef2f2 !important }
   tr[class*="row-color"]:hover td { filter:brightness(0.97) }
 
   /* Drag & Drop */
@@ -358,7 +369,7 @@ async function loadData(manual = false) {
         ...r,
         amount : parseFloat(r.amount) || 0,
         days   : parseInt(r.days)     || 0,
-        order  : parseInt(r.order) >= 0 ? parseInt(r.order) : 9999,
+        order  : (r.order !== '' && r.order !== null && r.order !== undefined && !isNaN(parseInt(r.order))) ? parseInt(r.order) : 9999,
       })).sort((a, b) => a.order - b.order);
       render();
       if (manual) toast('تم تحديث البيانات ✓', 'success');
@@ -562,17 +573,56 @@ function getFiltered() {
 //  RENDER HELPERS (unchanged logic, same CSS classes)
 // ════════════════════════════════════════════════════════════
 const ROW_COLORS = [
-  { val:'',  label:'بدون لون',           hex:'' },
-  { val:'1', label:'لسه موصلتش',         hex:'#9CA3AF' },
-  { val:'2', label:'وصلت',               hex:'#3B82F6' },
-  { val:'3', label:'في انتظار سحب إذن', hex:'#EAB308' },
-  { val:'4', label:'تم سحب الإذن',      hex:'#F59E0B' },
-  { val:'5', label:'تحت العمل',          hex:'#8B5CF6' },
-  { val:'6', label:'خرجت',               hex:'#06B6D4' },
-  { val:'7', label:'مع الناقل',          hex:'#14B8A6' },
-  { val:'8', label:'تم التسليم',         hex:'#16A34A' },
-  { val:'9', label:'مشكلة',              hex:'#DC2626' },
+  { val:'',  label:'بدون لون',           hex:'',        light:'#f9fafb', dark:false },
+  { val:'1', label:'لسه موصلتش',         hex:'#94A3B8', light:'#f1f5f9', dark:false },
+  { val:'2', label:'وصلت',               hex:'#60A5FA', light:'#eff6ff', dark:false },
+  { val:'3', label:'في انتظار سحب إذن', hex:'#FCD34D', light:'#fffbeb', dark:false },
+  { val:'4', label:'تم سحب الإذن',      hex:'#FB923C', light:'#fff7ed', dark:false },
+  { val:'5', label:'تحت العمل',          hex:'#A78BFA', light:'#f5f3ff', dark:false },
+  { val:'6', label:'خرجت',               hex:'#34D399', light:'#ecfdf5', dark:false },
+  { val:'7', label:'مع الناقل',          hex:'#2DD4BF', light:'#f0fdfa', dark:false },
+  { val:'8', label:'تم التسليم',         hex:'#4ADE80', light:'#f0fdf4', dark:false },
+  { val:'9', label:'مشكلة',              hex:'#F87171', light:'#fef2f2', dark:false },
 ];
+
+function cpHtml(id, cur) {
+  const c = ROW_COLORS.find(x => x.val === cur) || ROW_COLORS[0];
+  const opts = ROW_COLORS.map(o => {
+    return '<div class="cp-opt' + (o.val===cur?' sel':'') +
+           '" style="background:' + (o.light||'#f9fafb') + ';color:#1e293b"' +
+           ' onclick="updateRowColor(\'' + id + '\',\'' + o.val + '\');cpClose()">' +
+           '<span class="cp-dot" style="background:' + (o.hex||'#e2e8f0') + '"></span>' +
+           o.label + '</div>';
+  }).join('');
+  return '<div class="cp-wrap" id="cp_' + id + '">' +
+    '<div class="cp-btn" onclick="cpToggle(event,\'' + id + '\')">' +
+      '<span class="cp-dot" style="background:' + (c.hex||'#e2e8f0') + '"></span>' +
+      '<span style="overflow:hidden;text-overflow:ellipsis">' + (c.val ? c.label : 'لون') + '</span>' +
+    '</div>' +
+    '<div class="cp-menu" id="menu_' + id + '">' + opts + '</div>' +
+  '</div>';
+}
+
+function cpToggle(e, id) {
+  e.stopPropagation();
+  cpClose();
+  const wrap = document.getElementById('cp_' + id);
+  const menu = document.getElementById('menu_' + id);
+  if (!wrap || !menu) return;
+  wrap.classList.add('open');
+  // position fixed عشان ميتعلقش جوا الجدول
+  const rect = wrap.getBoundingClientRect();
+  menu.style.top  = (rect.bottom + 4) + 'px';
+  menu.style.left = rect.left + 'px';
+}
+
+function cpClose() {
+  document.querySelectorAll('.cp-wrap.open').forEach(el => el.classList.remove('open'));
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.cp-wrap')) cpClose();
+});
 
 function rowColorOpts(cur) {
   return ROW_COLORS.map(c =>
@@ -670,11 +720,7 @@ function viewRow(r) {
     <td><span class="badge ${statusCls(r.status)}">${r.status}</span></td>
     <td style="text-align:center;width:75px;min-width:75px;max-width:75px"><span class="badge ${r.clearer==='Relan'?'c-RELAN':r.clearer==='Mahaba'?'c-MAHABA':r.clearer==='El Badry'?'c-BADRY':'s-N'}">${r.clearer||'—'}</span></td>
     <td style="color:#666;font-size:11px;word-break:break-word;min-width:200px">${r.comment||'—'}</td>
-    <td style="text-align:center">
-      <select style="font-size:10px;padding:1px 2px;border-radius:4px;border:1px solid #d0d7e2;background:${ROW_COLORS.find(c=>c.val===(r.rowColor||''))?.hex||'#fff'};color:${(r.rowColor&&r.rowColor>='5')?'#fff':'#333'};width:52px" onchange="updateRowColor('${r.id}',this.value)">
-        ${rowColorOpts(r.rowColor||'')}
-      </select>
-    </td>
+    <td style="text-align:center">${cpHtml(r.id, r.rowColor||'')}</td>
     <td><button class="icon-btn" onclick="toggleEdit()" title="تعديل">✏️</button></td>`;
 }
 
@@ -702,11 +748,7 @@ function editRow(r) {
     <td class="edit-cell"><select onchange="updateField('${id}','status',this.value)">${statusOpts(r.status)}</select></td>
     <td class="edit-cell" style="text-align:center;min-width:75px"><select style="width:100%" onchange="updateField('${id}','clearer',this.value)">${clearerOpts(r.clearer||'')}</select></td>
     <td class="edit-cell" style="min-width:300px"><textarea onchange="updateField('${id}','comment',this.value)" style="width:100%;height:60px">${esc(r.comment)}</textarea></td>
-    <td style="text-align:center">
-      <select style="font-size:10px;padding:1px 2px;border-radius:4px;border:1px solid #d0d7e2;width:52px" onchange="updateRowColor('${id}',this.value)">
-        ${rowColorOpts(r.rowColor||'')}
-      </select>
-    </td>
+    <td style="text-align:center">${cpHtml(r.id, r.rowColor||'')}</td>
     <td style="white-space:nowrap"><button class="icon-btn save" onclick="manualSave('${id}')" title="حفظ">💾</button><button class="icon-btn del" onclick="deleteRow('${id}')" title="حذف">🗑</button></td>`;
 }
 
@@ -844,49 +886,33 @@ function initDrag() {
 //  KEYBOARD SHORTCUTS
 // ════════════════════════════════════════════════════════════
 document.addEventListener('keydown', async (e) => {
-  // تجاهل لو الفوكس على input أو textarea ما عدا Escape و Alt+S
   const inInput = ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName);
+  const alt = e.altKey;
+  const key = e.key.toLowerCase();
 
-  // Alt + S — حفظ فوري
-  if (e.altKey && e.key === 's') {
+  // Alt+S حفظ فوري — يشتغل حتى جوا input
+  if (alt && key === 's') {
     e.preventDefault();
-    if (editMode) {
-      showSaving();
-      try {
-        await Promise.all(rows.map(r => apiUpdate(r)));
-        hideSaving();
-        toast('تم حفظ كل التعديلات ✓', 'success');
-      } catch(err) {
-        hideSaving();
-        toast('خطأ في الحفظ: ' + err.message, 'error', 4000);
-      }
+    showSaving();
+    try {
+      for (const r of rows) { await apiUpdate(r); }
+      hideSaving();
+      toast('تم حفظ كل التعديلات ✓', 'success');
+    } catch(err) {
+      hideSaving();
+      toast('خطأ في الحفظ: ' + err.message, 'error', 4000);
     }
     return;
   }
 
+  if (e.key === 'Escape' && editMode) { toggleEdit(); return; }
   if (inInput) return;
 
-  // Alt + N — شحنة جديدة
-  if (e.altKey && e.key === 'n') { e.preventDefault(); addRow(); return; }
-
-  // Alt + E — Edit Mode
-  if (e.altKey && e.key === 'e') { e.preventDefault(); toggleEdit(); return; }
-
-  // Alt + R — Refresh
-  if (e.altKey && e.key === 'r') { e.preventDefault(); loadData(true); return; }
-
-  // Alt + P — Print
-  if (e.altKey && e.key === 'p') { e.preventDefault(); window.print(); return; }
-
-  // Alt + F — فوكس على البحث
-  if (e.altKey && e.key === 'f') {
-    e.preventDefault();
-    document.getElementById('fSearch').focus();
-    return;
-  }
-
-  // Escape — إغلاق Edit Mode
-  if (e.key === 'Escape' && editMode) { toggleEdit(); return; }
+  if (alt && key === 'n') { e.preventDefault(); addRow(); return; }
+  if (alt && key === 'e') { e.preventDefault(); toggleEdit(); return; }
+  if (alt && key === 'r') { e.preventDefault(); loadData(true); return; }
+  if (alt && key === 'p') { e.preventDefault(); window.print(); return; }
+  if (alt && key === 'f') { e.preventDefault(); document.getElementById('fSearch').focus(); return; }
 });
 
 // ════════════════════════════════════════════════════════════
