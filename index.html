@@ -168,7 +168,7 @@
     <select id="fClearer"><option value="">كل الـ Clearers</option><option>Relan</option><option>Mahaba</option><option>El Badry</option></select>
     <input id="fSearch" type="text" placeholder="بحث BL / عميل / بضاعة / Ref..."/>
     <button class="btn btn-edit" id="btnToggleEdit" onclick="toggleEdit()">✏️ Edit Mode</button>
-    <button class="btn btn-add" id="btnAdd" onclick="addRow()">+ شحنة جديدة</button>
+    <button class="btn btn-add" id="btnAdd" onclick="addRow()">➕</button>
     <button class="btn" onclick="window.print()">🖨️ Print</button>
     <button class="btn" onclick="loadData(true)" title="تحديث يدوي">🔄 Refresh</button>
   </div>
@@ -209,7 +209,7 @@
 // ════════════════════════════════════════════════════════════
 //  CONFIG — paste your deployed Apps Script URL here
 // ════════════════════════════════════════════════════════════
-const API_URL = 'https://script.google.com/macros/s/AKfycbzcV6uVMh7BqWpS4eJPVddeOltJN_Qy6pcIvKRmkbshkGb-OqfoumhNWk-OzFzwknSQ/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzLSnMnohO8wZSBQT6_TPiWO3WB442Xvn0lrM4Dw1DaGcBAzHQk4EeL_7HvDA0skyr-/exec';
 
 const AUTO_REFRESH_INTERVAL = 60000; // 60 seconds
 
@@ -358,7 +358,8 @@ async function loadData(manual = false) {
         ...r,
         amount : parseFloat(r.amount) || 0,
         days   : parseInt(r.days)     || 0,
-      }));
+        order  : parseInt(r.order) >= 0 ? parseInt(r.order) : 9999,
+      })).sort((a, b) => a.order - b.order);
       render();
       if (manual) toast('تم تحديث البيانات ✓', 'success');
     }
@@ -772,14 +773,19 @@ function fModalNo() {
 // ════════════════════════════════════════════════════════════
 //  ROW COLOR
 // ════════════════════════════════════════════════════════════
-function updateRowColor(id, val) {
+async function updateRowColor(id, val) {
   const r = rows.find(x => String(x.id) === String(id));
   if (!r) return;
   r.rowColor = val;
-  // أعد رسم الصف مع اللون الجديد
   render();
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => persistUpdate(r), 600);
+  showSaving();
+  try {
+    await apiUpdate(r);
+    hideSaving();
+  } catch(err) {
+    hideSaving();
+    toast('خطأ في حفظ اللون: ' + err.message, 'error', 4000);
+  }
 }
 
 // ════════════════════════════════════════════════════════════
@@ -833,6 +839,55 @@ function initDrag() {
     });
   });
 }
+
+// ════════════════════════════════════════════════════════════
+//  KEYBOARD SHORTCUTS
+// ════════════════════════════════════════════════════════════
+document.addEventListener('keydown', async (e) => {
+  // تجاهل لو الفوكس على input أو textarea ما عدا Escape و Alt+S
+  const inInput = ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName);
+
+  // Alt + S — حفظ فوري
+  if (e.altKey && e.key === 's') {
+    e.preventDefault();
+    if (editMode) {
+      showSaving();
+      try {
+        await Promise.all(rows.map(r => apiUpdate(r)));
+        hideSaving();
+        toast('تم حفظ كل التعديلات ✓', 'success');
+      } catch(err) {
+        hideSaving();
+        toast('خطأ في الحفظ: ' + err.message, 'error', 4000);
+      }
+    }
+    return;
+  }
+
+  if (inInput) return;
+
+  // Alt + N — شحنة جديدة
+  if (e.altKey && e.key === 'n') { e.preventDefault(); addRow(); return; }
+
+  // Alt + E — Edit Mode
+  if (e.altKey && e.key === 'e') { e.preventDefault(); toggleEdit(); return; }
+
+  // Alt + R — Refresh
+  if (e.altKey && e.key === 'r') { e.preventDefault(); loadData(true); return; }
+
+  // Alt + P — Print
+  if (e.altKey && e.key === 'p') { e.preventDefault(); window.print(); return; }
+
+  // Alt + F — فوكس على البحث
+  if (e.altKey && e.key === 'f') {
+    e.preventDefault();
+    document.getElementById('fSearch').focus();
+    return;
+  }
+
+  // Escape — إغلاق Edit Mode
+  if (e.key === 'Escape' && editMode) { toggleEdit(); return; }
+});
 
 // ════════════════════════════════════════════════════════════
 //  INIT
