@@ -115,6 +115,25 @@
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
   .btn[disabled]{opacity:.5;cursor:not-allowed}
+
+  /* Row Colors */
+  .row-color-1  { background:#f3f4f6 !important } /* لسه موصلتش */
+  .row-color-2  { background:#dbeafe !important } /* وصلت */
+  .row-color-3  { background:#fef9c3 !important } /* في انتظار سحب إذن */
+  .row-color-4  { background:#fef3c7 !important } /* تم سحب الإذن */
+  .row-color-5  { background:#ede9fe !important } /* تحت العمل */
+  .row-color-6  { background:#cffafe !important } /* خرجت */
+  .row-color-7  { background:#ccfbf1 !important } /* مع الناقل */
+  .row-color-8  { background:#dcfce7 !important } /* تم التسليم */
+  .row-color-9  { background:#fee2e2 !important } /* مشكلة */
+  tr[class*="row-color"] td { background:inherit !important }
+  tr[class*="row-color"]:hover td { filter:brightness(0.97) }
+
+  /* Drag & Drop */
+  tr.dragging { opacity:.4; }
+  tr.drag-over td { border-top:2px solid #1a3a5c !important; }
+  td.drag-handle { cursor:grab; color:#cbd5e1; font-size:14px; user-select:none }
+  td.drag-handle:active { cursor:grabbing }
   #refreshInfo{font-size:10px;color:#aaa;margin-left:4px}
 </style>
 </head>
@@ -157,14 +176,14 @@
   <div class="tbl-wrap">
     <table>
       <colgroup>
-        <col style="width:115px"><col style="width:60px"><col style="width:130px"><col style="width:100px"><col style="width:55px">
+        <col style="width:18px"><col style="width:115px"><col style="width:60px"><col style="width:130px"><col style="width:100px"><col style="width:55px">
         <col style="width:50px"><col style="width:88px"><col style="width:24px"><col style="width:55px">
-        <col style="width:50px"><col style="width:18px"><col style="width:18px"><col><col style="width:75px"><col style="width:68px">
+        <col style="width:50px"><col style="width:18px"><col style="width:18px"><col><col style="width:75px"><col style="width:55px"><col style="width:68px">
       </colgroup>
       <thead><tr>
-        <th>BL No. / Ref</th><th>SL</th><th>بضاعة</th><th>عميل / مورد</th><th>بنك</th>
+        <th style="width:22px">⠿</th><th>BL No. / Ref</th><th>SL</th><th>بضاعة</th><th>عميل / مورد</th><th>بنك</th>
         <th>حاويات</th><th>مبلغ $</th><th>ETA</th><th>تخزين</th>
-        <th>وصول من البنك</th><th>أيام</th><th>حالة</th><th style="text-align:center">Clearer</th><th style="text-align:center">ملاحظات</th><th>⚙️</th>
+        <th>وصول من البنك</th><th>أيام</th><th>حالة</th><th style="text-align:center">Clearer</th><th style="text-align:center">ملاحظات</th><th>🎨</th><th>⚙️</th>
       </tr></thead>
       <tbody id="tbody"></tbody>
     </table>
@@ -190,7 +209,7 @@
 // ════════════════════════════════════════════════════════════
 //  CONFIG — paste your deployed Apps Script URL here
 // ════════════════════════════════════════════════════════════
-const API_URL = 'https://script.google.com/macros/s/AKfycbx-0tgrNlC7AESyUDBuyxWwAZcJ92VMrO1vhUBiQ03b_Mc9-Pmjp25jJTuL7V0iopQ/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzcV6uVMh7BqWpS4eJPVddeOltJN_Qy6pcIvKRmkbshkGb-OqfoumhNWk-OzFzwknSQ/exec';
 
 const AUTO_REFRESH_INTERVAL = 60000; // 60 seconds
 
@@ -472,7 +491,8 @@ async function addRow() {
     days    : 0,
     status  : 'N',
     clearer : '',
-    comment : ''
+    comment : '',
+    rowColor: ''
   };
 
   showSpinner();
@@ -540,6 +560,29 @@ function getFiltered() {
 // ════════════════════════════════════════════════════════════
 //  RENDER HELPERS (unchanged logic, same CSS classes)
 // ════════════════════════════════════════════════════════════
+const ROW_COLORS = [
+  { val:'',  label:'بدون لون',           hex:'' },
+  { val:'1', label:'لسه موصلتش',         hex:'#9CA3AF' },
+  { val:'2', label:'وصلت',               hex:'#3B82F6' },
+  { val:'3', label:'في انتظار سحب إذن', hex:'#EAB308' },
+  { val:'4', label:'تم سحب الإذن',      hex:'#F59E0B' },
+  { val:'5', label:'تحت العمل',          hex:'#8B5CF6' },
+  { val:'6', label:'خرجت',               hex:'#06B6D4' },
+  { val:'7', label:'مع الناقل',          hex:'#14B8A6' },
+  { val:'8', label:'تم التسليم',         hex:'#16A34A' },
+  { val:'9', label:'مشكلة',              hex:'#DC2626' },
+];
+
+function rowColorOpts(cur) {
+  return ROW_COLORS.map(c =>
+    `<option value="${c.val}"${c.val===cur?' selected':''}>${c.label}</option>`
+  ).join('');
+}
+
+function getRowClass(rc) {
+  return rc ? 'row-color-'+rc : '';
+}
+
 function fmtAmt(v) { return '$' + Number(v).toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 }) }
 function bankCls(b) { return b === 'QNB' ? 'bank-QNB' : b === 'NBE' ? 'bank-NBE' : b === 'ATJ' ? 'bank-ATJ' : 'bank-QNB' }
 function statusCls(s) { const m={'W':'s-W','B':'s-B','O':'s-O','S-B':'s-SB','S-O':'s-SO','S-W':'s-SW','F':'s-F','H':'s-H','C':'s-C','N':'s-N','W/O':'s-WO'}; return m[s]||'s-N'; }
@@ -611,6 +654,7 @@ function fmtDateDisplay(v) {
 function viewRow(r) {
   const d = calcDays(r.eta);
   return `
+    <td class="drag-handle" draggable="false" title="اسحب لتغيير الترتيب">⠿</td>
     <td><div style="font-weight:600;font-size:11px">${r.bl}</div><div class="sub-text">${r.ref}</div></td>
     <td style="font-size:11px">${r.sl||'—'}</td>
     <td>${r.goods}</td>
@@ -625,12 +669,18 @@ function viewRow(r) {
     <td><span class="badge ${statusCls(r.status)}">${r.status}</span></td>
     <td style="text-align:center;width:75px;min-width:75px;max-width:75px"><span class="badge ${r.clearer==='Relan'?'c-RELAN':r.clearer==='Mahaba'?'c-MAHABA':r.clearer==='El Badry'?'c-BADRY':'s-N'}">${r.clearer||'—'}</span></td>
     <td style="color:#666;font-size:11px;word-break:break-word;min-width:200px">${r.comment||'—'}</td>
+    <td style="text-align:center">
+      <select style="font-size:10px;padding:1px 2px;border-radius:4px;border:1px solid #d0d7e2;background:${ROW_COLORS.find(c=>c.val===(r.rowColor||''))?.hex||'#fff'};color:${(r.rowColor&&r.rowColor>='5')?'#fff':'#333'};width:52px" onchange="updateRowColor('${r.id}',this.value)">
+        ${rowColorOpts(r.rowColor||'')}
+      </select>
+    </td>
     <td><button class="icon-btn" onclick="toggleEdit()" title="تعديل">✏️</button></td>`;
 }
 
 function editRow(r) {
   const id = r.id;
   return `
+    <td class="drag-handle">⠿</td>
     <td class="edit-cell">
       <input value="${esc(r.bl)}"    onchange="updateField('${id}','bl',this.value)"    style="margin-bottom:2px"/>
       <input value="${esc(r.ref)}"   onchange="updateField('${id}','ref',this.value)"   placeholder="Ref..."/>
@@ -651,6 +701,11 @@ function editRow(r) {
     <td class="edit-cell"><select onchange="updateField('${id}','status',this.value)">${statusOpts(r.status)}</select></td>
     <td class="edit-cell" style="text-align:center;min-width:75px"><select style="width:100%" onchange="updateField('${id}','clearer',this.value)">${clearerOpts(r.clearer||'')}</select></td>
     <td class="edit-cell" style="min-width:300px"><textarea onchange="updateField('${id}','comment',this.value)" style="width:100%;height:60px">${esc(r.comment)}</textarea></td>
+    <td style="text-align:center">
+      <select style="font-size:10px;padding:1px 2px;border-radius:4px;border:1px solid #d0d7e2;width:52px" onchange="updateRowColor('${id}',this.value)">
+        ${rowColorOpts(r.rowColor||'')}
+      </select>
+    </td>
     <td style="white-space:nowrap"><button class="icon-btn save" onclick="manualSave('${id}')" title="حفظ">💾</button><button class="icon-btn del" onclick="deleteRow('${id}')" title="حذف">🗑</button></td>`;
 }
 
@@ -690,7 +745,8 @@ function render() {
     tbody.innerHTML = '<tr><td colspan="13" class="empty">لا توجد نتائج</td></tr>';
     return;
   }
-  tbody.innerHTML = filtered.map(r => `<tr>${editMode ? editRow(r) : viewRow(r)}</tr>`).join('');
+  tbody.innerHTML = filtered.map(r => `<tr data-id="${r.id}" class="${getRowClass(r.rowColor)}">${editMode ? editRow(r) : viewRow(r)}</tr>`).join('');
+  initDrag();
 }
 
 // ════════════════════════════════════════════════════════════
@@ -711,6 +767,71 @@ function fModalYes() {
 function fModalNo() {
   document.getElementById('fModal').classList.remove('active');
   window._fPendingId = null;
+}
+
+// ════════════════════════════════════════════════════════════
+//  ROW COLOR
+// ════════════════════════════════════════════════════════════
+function updateRowColor(id, val) {
+  const r = rows.find(x => String(x.id) === String(id));
+  if (!r) return;
+  r.rowColor = val;
+  // أعد رسم الصف مع اللون الجديد
+  render();
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => persistUpdate(r), 600);
+}
+
+// ════════════════════════════════════════════════════════════
+//  DRAG & DROP SORT
+// ════════════════════════════════════════════════════════════
+let dragSrcId = null;
+
+function initDrag() {
+  const tbody = document.getElementById('tbody');
+  const trs   = tbody.querySelectorAll('tr');
+
+  trs.forEach(tr => {
+    const handle = tr.querySelector('.drag-handle');
+    if (!handle) return;
+
+    handle.addEventListener('mousedown', () => { tr.draggable = true; });
+    handle.addEventListener('mouseup',   () => { tr.draggable = false; });
+
+    tr.addEventListener('dragstart', e => {
+      dragSrcId = tr.dataset.id;
+      tr.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+
+    tr.addEventListener('dragend', () => {
+      tr.draggable = false;
+      tr.classList.remove('dragging');
+      tbody.querySelectorAll('tr').forEach(r => r.classList.remove('drag-over'));
+    });
+
+    tr.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      tbody.querySelectorAll('tr').forEach(r => r.classList.remove('drag-over'));
+      tr.classList.add('drag-over');
+    });
+
+    tr.addEventListener('drop', e => {
+      e.preventDefault();
+      const targetId = tr.dataset.id;
+      if (!dragSrcId || dragSrcId === targetId) return;
+
+      const srcIdx = rows.findIndex(r => String(r.id) === String(dragSrcId));
+      const tgtIdx = rows.findIndex(r => String(r.id) === String(targetId));
+      if (srcIdx === -1 || tgtIdx === -1) return;
+
+      // إعادة الترتيب
+      const [moved] = rows.splice(srcIdx, 1);
+      rows.splice(tgtIdx, 0, moved);
+      render();
+    });
+  });
 }
 
 // ════════════════════════════════════════════════════════════
